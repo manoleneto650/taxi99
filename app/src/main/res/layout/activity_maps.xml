@@ -13,5 +13,16 @@
 
     </fragment>
 
+    <TextView
+        android:id="@+id/textEndereco"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/white"
+        android:gravity="start|center"
+        android:paddingLeft="8dp"
+        android:text="Endereco"
+        android:textSize="20dp" />
+
 </RelativeLayout>
 

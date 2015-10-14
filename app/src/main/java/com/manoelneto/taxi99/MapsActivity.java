@@ -1,11 +1,14 @@
 package com.manoelneto.taxi99;
 
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.app.FragmentActivity;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,9 +28,13 @@ import com.manoelneto.taxi99.rest.IClientAppRest;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.ViewById;
 import org.androidannotations.annotations.rest.RestService;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 @EActivity(R.layout.activity_maps)
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -35,13 +42,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @RestService
     protected IClientAppRest serviceRest;
 
+    @ViewById(R.id.textEndereco)
+    TextView textEndereco;
+
     private Driver[] taxistas;
     private GoogleApiClient mGoogleApiClient;
     private GoogleMap mapa;
 
     private HashMap<String, Marker> taxistasNoMapa;
     private LatLngInterpolator latLngInterpolator;
-
+    private Geocoder geocoder;
 
     @AfterViews
     void afterViews() {
@@ -56,14 +66,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
 
         taxistasNoMapa = new HashMap<>();
-
+        geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
         final Handler manipulador = new Handler(Looper.getMainLooper());
         manipulador.postDelayed(new Runnable() {
             @Override
             public void run() {
                 getTodosTaxistas();
-                manipulador.postDelayed(this, 2000);
+                manipulador.postDelayed(this, 5000);
             }
         }, 3000);
 
@@ -145,12 +155,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 public void onMarkerDragEnd(Marker marker) {
                     CameraPosition cameraPosition = new CameraPosition.Builder().target(marker.getPosition()).zoom(17).build();
                     mapa.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                    textEndereco.setText(getEndereco(marker.getPosition()));
                 }
             });
 
             CameraPosition myPosition = new CameraPosition.Builder().target(current).zoom(17).build();
             mapa.animateCamera(CameraUpdateFactory.newCameraPosition(myPosition));
+            textEndereco.setText(getEndereco(current));
         }
+    }
+
+    private String getEndereco(LatLng local) {
+        try {
+            String retorno = "";
+            List<Address> enderecos = geocoder.getFromLocation(local.latitude, local.longitude, 1);
+            retorno += enderecos.get(0).getThoroughfare() + ", " + enderecos.get(0).getFeatureName();
+
+            return retorno;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     @Override
